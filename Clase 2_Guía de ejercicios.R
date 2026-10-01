@@ -28,7 +28,7 @@
 
 # 2) IMPORTAR LA BASE DE DATOS mineduc_paes
 #    (se descarga directamente desde el repositorio del curso)
-# data <- rio::import("https://github.com/JoseRTM/AED_UDP/raw/refs/heads/main/mineduc_paes.rds")
+data <- rio::import("https://github.com/JoseRTM/AED-2026/raw/refs/heads/main/Datos/mineduc_paes.rds")
 
 
 # 3) LIMPIAR LOS CÓDIGOS PERDIDOS
