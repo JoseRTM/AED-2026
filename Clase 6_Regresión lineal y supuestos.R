@@ -24,7 +24,7 @@ pacman::p_load(
 )
 
 data <- rio::import(
-  "https://github.com/JoseRTM/AED_UDP/raw/refs/heads/main/welfare.dta"
+  "Datos/welfare.dta"
 )
 
 skimr::skim(data)
@@ -72,9 +72,16 @@ summary(modelo_simple)$r.squared
 # Agregamos PIB. Cada pendiente se interpreta manteniendo constantes las
 # demás variables incluidas en el modelo.
 
-modelo_multiple <- lm(gini_slc ~ educ_expend + gdp, data = data)
-summary(modelo_multiple)
-confint(modelo_multiple)
+# Muestra común: casos completos en todas las variables del modelo múltiple
+data_cc <- na.omit(data[c("gini_slc", "educ_expend", "gdp")])
+nrow(data_cc)
+
+modelo_simple_cc   <- lm(gini_slc ~ educ_expend,       data = data_cc)
+modelo_multiple_cc <- lm(gini_slc ~ educ_expend + gdp, data = data_cc)
+
+
+summary(modelo_multiple_cc)
+confint(modelo_multiple_cc)
 
 texreg::screenreg(
   list(modelo_simple, modelo_multiple),
@@ -84,7 +91,7 @@ texreg::screenreg(
 )
 
 # Comparación formal entre modelos anidados
-anova(modelo_simple, modelo_multiple)
+anova(modelo_simple_cc, modelo_multiple_cc)
 
 #---------------------------------------------------------------#
 # 3. PREDICCIONES                                               #
@@ -92,17 +99,17 @@ anova(modelo_simple, modelo_multiple)
 
 nuevos_casos <- data.frame(
   educ_expend = c(3, 5, 7),
-  gdp = median(data$gdp, na.rm = TRUE)
+  gdp = median(data_cc$gdp, na.rm = TRUE)
 )
 
-predict(modelo_multiple,
+predict(modelo_multiple_cc,
         newdata = nuevos_casos,
         interval = "confidence",
         level = 0.95)
 
 # interval = "confidence" estima la media esperada para casos con esos X.
 # interval = "prediction" incorpora además la variabilidad individual.
-predict(modelo_multiple,
+predict(modelo_multiple_cc,
         newdata = nuevos_casos,
         interval = "prediction",
         level = 0.95)
@@ -112,7 +119,7 @@ predict(modelo_multiple,
 #---------------------------------------------------------------#
 
 # A. LINEALIDAD Y FORMA FUNCIONAL
-plot(fitted(modelo_multiple), residuals(modelo_multiple),
+plot(fitted(modelo_multiple_cc), residuals(modelo_multiple_cc),
      xlab = "Valores ajustados", ylab = "Residuos",
      main = "Residuos y valores ajustados",
      pch = 19, col = adjustcolor("steelblue4", alpha.f = 0.6))
@@ -120,26 +127,26 @@ abline(h = 0, col = "firebrick3", lwd = 2)
 
 # B. VARIANZA CONSTANTE
 # H0 del test de Breusch-Pagan: homocedasticidad.
-lmtest::bptest(modelo_multiple)
+lmtest::bptest(modelo_multiple_cc)
 
 # C. NORMALIDAD APROXIMADA DE LOS RESIDUOS
 # Importa principalmente para inferencia en muestras pequeñas.
-qqnorm(residuals(modelo_multiple), main = "Q-Q de residuos")
-qqline(residuals(modelo_multiple), col = "firebrick3", lwd = 2)
+qqnorm(residuals(modelo_multiple_cc), main = "Q-Q de residuos")
+qqline(residuals(modelo_multiple_cc), col = "firebrick3", lwd = 2)
 
 # D. MULTICOLINEALIDAD
-car::vif(modelo_multiple)
+car::vif(modelo_multiple_cc)
 
 # E. OBSERVACIONES INFLUYENTES
-plot(cooks.distance(modelo_multiple), type = "h",
+plot(cooks.distance(modelo_multiple_cc), type = "h",
      xlab = "Observación", ylab = "Distancia de Cook",
      main = "Influencia de las observaciones")
-abline(h = 4 / nobs(modelo_multiple), col = "firebrick3", lty = 2)
+abline(h = 4 / nobs(modelo_multiple_cc), col = "firebrick3", lty = 2)
 
 # Panel estándar de diagnóstico
 configuracion_original <- par(no.readonly = TRUE)
 par(mfrow = c(2, 2))
-plot(modelo_multiple)
+plot(modelo_multiple_cc)
 par(configuracion_original)
 
 # Los diagnósticos deben interpretarse junto con el diseño, el tamaño de la
